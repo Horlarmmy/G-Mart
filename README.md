@@ -9,7 +9,7 @@ This is a very gadgets marketplace dapp where users can:
 * See what others think about the gadgets
 
 ## Live Demo
-
+[G'Mart](https://horlarmmy.github.io/G-Mart/)
 ## Usage
 
 ### Requirements
@@ -19,7 +19,12 @@ This is a very gadgets marketplace dapp where users can:
 4. Switch to the alfajores testnet in the CeloExtensionWallet.
 
 ### Test
-
+1. Create a product.
+2. Create a second account in your extension wallet and send them cUSD tokens.
+3. Buy product with secondary account.
+4. Check if balance of first account increased.
+5. Drop review on the product bought.
+6. Upvote a Product you liked.
 
 ## Project Setup
 
