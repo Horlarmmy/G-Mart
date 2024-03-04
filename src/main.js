@@ -109,7 +109,7 @@ const renderReviews = async (index) => {
 function productTemplate(_gadget) {
   return `
     <div class="card mb-4">
-      <img class="card-img-top" src=${_gadget.image} alt="...">
+      <img class="card-img-top" src=${_gadget.image} alt="${_gadget.name}...">
       <div class="position-absolute top-0 begin-0 bg-warning mt-4 me-2 px-2 py-1 rounded">
         ${_gadget.upvotes} Upvotes
       </div>
@@ -123,6 +123,9 @@ function productTemplate(_gadget) {
         <h2 class="card-title fs-4 fw-bold mt-2">${_gadget.name}</h2>
         <p class="card-text mb-4" style="min-height: 20px; font-weight: 500;">
         ${_gadget.description}             
+        </p>
+        <p class="card-text mb-4" style="min-height: 20px; font-weight: 500;">
+        Location: ${_gadget.location}             
         </p>
 
         <div class="d-grid gap-2">

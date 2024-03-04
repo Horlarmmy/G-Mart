@@ -25,6 +25,7 @@ This is a very gadgets marketplace dapp where users can:
 4. Check if balance of first account increased.
 5. Drop review on the product bought.
 6. Upvote a Product you liked.
+7. Check others reviews on the product you are purchasing
 
 ## Project Setup
 
