@@ -55,7 +55,6 @@ const getProducts = async function () {
   for (let i = 0; i < _productLength; i++) {
     let _gadget = new Promise(async (resolve, reject) => {
       let product = await contract.methods.readProduct(i).call()
-      console.log(product)
       resolve({
         index: i,
         owner: product[0],
@@ -89,6 +88,7 @@ const renderProducts = async () => {
 const renderReviews = async (index) => {
   document.getElementById("reviews").innerHTML = "";
   const reviews = gadgets[index].reviews;
+  console.log(index)
   reviews.forEach(_review => {
     const newDiv = document.createElement("div");
     const reviewTemp = document.createElement("div");
@@ -101,9 +101,9 @@ const renderReviews = async (index) => {
     reviewTemp.className = "row";
     reviewTemp.appendChild(imgDiv)
     reviewTemp.appendChild(newDiv)
-    document.getElementById("addReviewBtn").dataset.id = index
     document.getElementById("reviews").appendChild(reviewTemp);
   });
+  document.getElementById("addReviewBtn").dataset.id = index
 };
 
 function productTemplate(_gadget) {
@@ -264,6 +264,7 @@ document
     const params = document.getElementById("newReview").value
     console.log(params);
     const index = e.target.dataset.id
+    console.log(index)
     notification(`⌛ Adding Review...`)
     try {
       const result = await contract.methods
