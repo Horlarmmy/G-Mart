@@ -135,7 +135,7 @@ function productTemplate(_gadget) {
           data-bs-target="#reviewsModal"
           id=${_gadget.index}
         >
-          Reviews
+          Reviews (${_gadget.reviews.length})
         </a>
         <a class="btn btn-lg btn-outline-dark like fs-6 p-3" id=${_gadget.index}>
             Upvote
