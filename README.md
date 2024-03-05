@@ -1,7 +1,7 @@
 # G'Mart
 
 ## Description
-This is a very gadgets marketplace dapp where users can:
+This is a gadgets marketplace dapp where users can:
 * View gadgets on the store
 * Add gadgets to the store
 * Buy gadgets
