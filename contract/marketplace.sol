@@ -63,9 +63,8 @@ contract Marketplace {
         // Increment the productsLength counter
         productsLength++;
     }
-
-    // Function to read product details by index
-    // Returns the owner, name, image, description, location, price, and number of units sold for the product
+    
+    // Function to allow a user to read a product from the marketplace
     function readProduct(uint _index) public view returns (
         address payable,
         string memory, 
