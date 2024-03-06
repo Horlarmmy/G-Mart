@@ -64,6 +64,28 @@ contract Marketplace {
         productsLength++;
     }
 
+    // Function to read product details by index
+    // Returns the owner, name, image, description, location, price, and number of units sold for the product
+    function readProduct(uint _index) public view returns (
+        address payable,
+        string memory, 
+        string memory, 
+        string memory, 
+        string memory, 
+        uint, 
+        uint
+    ) {
+        return (
+            products[_index].owner,
+            products[_index].name, 
+            products[_index].image, 
+            products[_index].description, 
+            products[_index].location, 
+            products[_index].price,
+            products[_index].sold
+        );
+    }
+
     // Function to allow a user to purchase a product from the marketplace
     function buyProduct(uint256 _index) public payable {
         // Check if the product exists
