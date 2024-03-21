@@ -5,7 +5,7 @@ import marketplaceAbi from "../contract/Market.abi.json"
 import erc20Abi from "../contract/erc20.abi.json"
 
 const ERC20_DECIMALS = 18
-const MPContractAddress = "0x1dD9772541d364b6A09EF89816255e64d9075930"
+const MPContractAddress = "0xf82C9E470166DF6D727016DBd948364D26784583"
 const cUSDContractAddress = "0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1"
 
 let kit
@@ -55,6 +55,9 @@ const getProducts = async function () {
   for (let i = 0; i < _productLength; i++) {
     let _gadget = new Promise(async (resolve, reject) => {
       let product = await contract.methods.readProduct(i).call()
+      let reviews = await contract.methods.getReviewsForProduct(i).call()
+      console.log(reviews)
+      console.log(product)
       resolve({
         index: i,
         owner: product[0],
@@ -65,7 +68,7 @@ const getProducts = async function () {
         price: new BigNumber(product[5]),
         sold: product[6],
         upvotes: product[7],
-        reviews: product[8]
+        reviews: reviews
       })
     })
     _gadgets.push(_gadget)
@@ -135,7 +138,7 @@ function productTemplate(_gadget) {
           data-bs-target="#reviewsModal"
           id=${_gadget.index}
         >
-          Reviews (${_gadget.reviews.length})
+          Reviews
         </a>
         <a class="btn btn-lg btn-outline-dark like fs-6 p-3" id=${_gadget.index}>
             Upvote
@@ -264,46 +267,15 @@ document
     const params = document.getElementById("newReview").value
     console.log(params);
     const index = e.target.dataset.id
-    console.log(index)
     notification(`⌛ Adding Review...`)
     try {
       const result = await contract.methods
-      .dropReview(index, params)
+      .addReview(index, params, 4)
       .send({ from: kit.defaultAccount })
+      notification(`🎉 You successfully added a Review.`)
     } catch (error) {
       notification(`⚠️ ${error}.`)
+      notification(`⚠️ Unable to add Review, An error occured!!!`)
     }
-    notification(`🎉 You successfully added a Review.`)
     getProducts()
   })
-
-document.querySelector('#marketplace').addEventListener('click', async (e) => {
-  if (e.target.className.includes("read")) {
-    const index = e.target.dataset.id;
-    let val = gadgets[index].read
-    if (!val) {
-      notification(`⌛ Waiting to mark ${gadgets[index].title} as Read...`);
-
-
-      try {
-        const result = await contract.methods.markAsRead(index).send({ from: kit.defaultAccount });
-
-        notification(`🎉 You successfully marked "${gadgets[index].title}" as Read.`);
-      } catch (error) {
-        notification(`⚠️ ${error}.`);
-      }
-    } else {
-      notification(`⌛ Waiting to mark ${gadgets[index].title} as UnRead...`);
-      try {
-        const result = await contract.methods.markAsUnRead(index).send({ from: kit.defaultAccount });
-
-        notification(`🎉 You successfully marked "${gadgets[index].title}" as UnRead.`);
-        console.log(e.target);
-      } catch (error) {
-        notification(`⚠️ ${error}.`);
-      }
-    }
-    getProducts();
-
-  }
-});
