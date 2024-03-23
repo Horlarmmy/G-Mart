@@ -1,6 +1,14 @@
 // SPDX-License-Identifier: MIT
 pragma solidity >=0.7.0 <0.9.0;
 
+/**
+ * @title Marketplace
+ * @dev Implements a decentralized marketplace contract where users can buy/sell products and leave reviews. 
+ * Uses an ERC20 token for payments.
+ */
+
+// Interface for interacting with the ERC20 token contract, which is expected to be the cUSD token.
+// This interface includes the essential functions of ERC20 tokens that our Marketplace contract will utilize.
 interface IERC20Token {
     function transfer(address, uint256) external returns (bool);
     function approve(address, uint256) external returns (bool);
@@ -17,6 +25,7 @@ contract Marketplace {
     uint internal productsLength = 0;
     address internal cUsdTokenAddress = 0x874069Fa1Eb16D44d622F2e0Ca25eeA172369bC1;
 
+     // Represents a product in the marketplace.
     struct Product {
         address payable owner;
         string name;
@@ -29,22 +38,30 @@ contract Marketplace {
         uint upvotes; // Track the number of upvotes per product
     }
 
+    // Represents a review for a product.
     struct Review {
-        address reviewer;
-        string comment;
-        uint rating; // Example rating system: 1 to 5
+        address reviewer; // The address of the user who wrote the review.
+        string comment; // The content of the review.
+        uint rating; // A numerical rating for the product, on a scale of 1 to 5.
     }
 
+    // Mapping from product ID to the Product struct, storing all products listed in the marketplace.
     mapping (uint => Product) internal products;
-    mapping (uint => Review[]) public reviews; // Maps product index to its reviews
-    mapping (uint => mapping(address => bool)) public hasBought; // Tracks if a user has bought an item
-    mapping (uint => mapping(address => bool)) public hasUpvoted; // Tracks if a user has upvoted an item
+    // Mapping from product ID to an array of Review structs, storing all reviews for each product.
+    mapping (uint => Review[]) public reviews;
+    // Mapping to track which users (addresses) have purchased a particular product. This is used to enforce rules around who can leave a review.
+    mapping (uint => mapping(address => bool)) public hasBought;
+    // Mapping to track which users (addresses) have upvoted a particular product, preventing multiple upvotes from the same user.
+    mapping (uint => mapping(address => bool)) public hasUpvoted;
 
-    // Events
+    // Event emitted when a product is successfully purchased.
     event ProductPurchased(uint indexed productId, address buyer);
+    // Event emitted when a review is added to a product.
     event ReviewAdded(uint indexed productId, address reviewer);
+    // Event emitted when a product is upvoted.
     event ProductUpvoted(uint indexed productId, address voter);
 
+    // Functions
     function writeProduct(string memory _name, string memory _image, string memory _description, string memory _location, uint _price) public {
         products[productsLength] = Product(
             payable(msg.sender),
@@ -65,6 +82,7 @@ contract Marketplace {
         return (product.owner, product.name, product.image, product.description, product.location, product.price, product.sold, product.upvotes);
     }
 
+    // Facilitates the purchase of a product, transferring the specified amount of cUSD from the buyer to the product owner.
     function buyProduct(uint _index) public payable {
         require(IERC20Token(cUsdTokenAddress).transferFrom(msg.sender, products[_index].owner, products[_index].price), "Transfer failed.");
         products[_index].sold++;
@@ -72,6 +90,7 @@ contract Marketplace {
         emit ProductPurchased(_index, msg.sender);
     }
 
+    // add a review, ensuring that only buyers can review and that the rating is within the 1-5 range.
     function addReview(uint _productId, string memory _comment, uint _rating) public {
         require(hasBought[_productId][msg.sender], "You must purchase the product before reviewing.");
         require(_rating >= 1 && _rating <= 5, "Rating must be between 1 and 5.");
@@ -80,6 +99,7 @@ contract Marketplace {
         emit ReviewAdded(_productId, msg.sender);
     }
 
+    // Enables a user to upvote a product, provided they haven't already done so.
     function upvoteProduct(uint _productId) public {
         require(!hasUpvoted[_productId][msg.sender], "You have already upvoted this product.");
         products[_productId].upvotes++;
@@ -87,10 +107,43 @@ contract Marketplace {
         emit ProductUpvoted(_productId, msg.sender);
     }
 
+    // Allows a product owner to update the details of their product.
+    // Only the owner of the product can update its details.
+    function updateProduct(
+        uint _productId,
+        string memory _name,
+        string memory _image,
+        string memory _description,
+        string memory _location,
+        uint _price
+    ) public {
+        // Ensure the product exists by checking if the owner address is not the zero address.
+        require(_productId < productsLength, "Product does not exist.");
+
+        // Fetch the product from storage.
+        Product storage product = products[_productId];
+
+        // Ensure that the caller is the owner of the product.
+        require(msg.sender == product.owner, "Only the product owner can update the product.");
+
+        // Update the product details.
+        product.name = _name;
+        product.image = _image;
+        product.description = _description;
+        product.location = _location;
+        product.price = _price;
+
+        // Note: `sold`, `reviewCount`, and `upvotes` are not updated as they represent accumulative actions on the product.
+    }
+
+
+    // Retrieves and returns all reviews for a given product.
     function getReviewsForProduct(uint _productId) public view returns (Review[] memory) {
         return reviews[_productId];
     }
 
+
+    // Returns the total number of products listed in the marketplace.
     function getProductsLength() public view returns (uint) {
         return productsLength;
     }

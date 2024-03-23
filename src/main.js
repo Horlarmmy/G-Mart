@@ -89,25 +89,44 @@ const renderProducts = async () => {
 };
 
 const renderReviews = async (index) => {
-  document.getElementById("reviews").innerHTML = "";
+  const reviewsContainer = document.getElementById("reviews");
+  reviewsContainer.innerHTML = ""; // Clear existing reviews
+  
   const reviews = gadgets[index].reviews;
-  console.log(index)
-  reviews.forEach(_review => {
-    const newDiv = document.createElement("div");
-    const reviewTemp = document.createElement("div");
-    const imgDiv = document.createElement('div')
-    imgDiv.innerHTML = identiconTemplate(_review[0])
-    newDiv.className = "col-md-10";
-    imgDiv.className = "col-md-2";
-    newDiv.innerHTML = `${_review[1]}`;
-    reviewTemp.style.padding = "15px"
-    reviewTemp.className = "row";
-    reviewTemp.appendChild(imgDiv)
-    reviewTemp.appendChild(newDiv)
-    document.getElementById("reviews").appendChild(reviewTemp);
-  });
-  document.getElementById("addReviewBtn").dataset.id = index
+  
+  // Check if there are no reviews for the product
+  if (reviews.length === 0) {
+    const noReviewsDiv = document.createElement("div");
+    noReviewsDiv.innerHTML = "No Reviews added yet";
+    noReviewsDiv.className = "no-reviews"; // Optional: add a class for styling
+    reviewsContainer.appendChild(noReviewsDiv);
+  } else {
+    // If there are reviews, render them
+    reviews.forEach(_review => {
+      const newDiv = document.createElement("div");
+      const reviewText = document.createElement("div");
+      const reviewRating = document.createElement("div");
+      const imgDiv = document.createElement('div');
+      imgDiv.innerHTML = identiconTemplate(_review[0]);
+      reviewText.className = "col-md-8";
+      reviewRating.className = "col-md-2";
+      imgDiv.className = "col-md-2";
+      reviewText.innerHTML = `${_review[1]}`; // Review text
+      reviewRating.innerHTML = `Rating: ${_review[2]}`; // Review rating
+      
+      const reviewTemp = document.createElement("div");
+      reviewTemp.style.padding = "15px";
+      reviewTemp.className = "row";
+      reviewTemp.appendChild(imgDiv);
+      reviewTemp.appendChild(reviewText);
+      reviewTemp.appendChild(reviewRating);
+      reviewsContainer.appendChild(reviewTemp);
+    });
+  }
+  
+  document.getElementById("addReviewBtn").dataset.id = index; // Set product ID for add review button
 };
+
 
 function productTemplate(_gadget) {
   return `
@@ -241,41 +260,60 @@ document.querySelector('#marketplace').addEventListener('click', async (e) => {
     const index = e.target.id;
     console.log(index);
     console.log(gadgets[index]);
-    notification(`⌛ Upvoting ${gadgets[index].name}...`);
+
+    notification(`⌛ Checking if you've already upvoted ${gadgets[index].name}...`);
+    
     try {
+      // Check if the user has already upvoted the product
+      const hasAlreadyUpvoted = await contract.methods.hasUpvoted(index, kit.defaultAccount).call();
+      
+      if (hasAlreadyUpvoted) {
+        notification(`⚠️ You've already upvoted "${gadgets[index].name}". No need to upvote again.`);
+        return; // Exit the function early if the user has already upvoted
+      }
+
+      // Proceed to upvote since the user hasn't upvoted yet
+      notification(`⌛ Upvoting ${gadgets[index].name}...`);
       const result = await contract.methods.upvoteProduct(index).send({ from: kit.defaultAccount });
       notification(`🎉 You upvoted "${gadgets[index].name}".`);
     } catch (error) {
       notification(`⚠️ ${error}.`);
     }
+    
     getProducts();
   }
 });
 
+
 document.querySelector('#marketplace').addEventListener('click', async (e) => {
   if (e.target.className.includes("reviewsBtn")) {
     const index = e.target.id;
-    console.log(index);
-    console.log(gadgets[index]);
     renderReviews(index);
   }
 });
 
-document
-  .querySelector("#addReviewBtn")
-  .addEventListener("click", async (e) => {
-    const params = document.getElementById("newReview").value
-    console.log(params);
-    const index = e.target.dataset.id
-    notification(`⌛ Adding Review...`)
-    try {
-      const result = await contract.methods
-      .addReview(index, params, 4)
-      .send({ from: kit.defaultAccount })
-      notification(`🎉 You successfully added a Review.`)
-    } catch (error) {
-      notification(`⚠️ ${error}.`)
-      notification(`⚠️ Unable to add Review, An error occured!!!`)
+document.querySelector("#addReviewBtn").addEventListener("click", async (e) => {
+  const reviewText = document.getElementById("reviewInput").value;
+  const rating = parseInt(document.getElementById("ratingInput").value, 10); // Assuming you have a <select> input for ratings with id="ratingInput"
+  const productId = e.target.dataset.id; // Ensure this is correctly retrieving the product ID
+  
+  notification(`⌛ Checking purchase status for ${gadgets[productId].name}...`);
+  try {
+    const hasBoughtProduct = await contract.methods.hasBought(productId, kit.defaultAccount).call();
+    
+    if (!hasBoughtProduct) {
+      notification(`⚠️ You must purchase ${gadgets[productId].name} before adding a review.`);
+      return; // Exit the function if the user hasn't bought the product
     }
-    getProducts()
-  })
+
+    // If the user has bought the product, proceed to add the review
+    notification(`⌛ Adding Review for ${gadgets[productId].name}...`);
+    const result = await contract.methods.addReview(productId, reviewText, rating).send({ from: kit.defaultAccount });
+    notification(`🎉 You successfully added a review for "${gadgets[productId].name}".`);
+    getProducts(); // Refresh the products list to show the new review
+  } catch (error) {
+    console.error(error); // Log the error to the console for debugging
+    notification(`⚠️ Unable to add review, an error occurred: ${error.message}`);
+  }
+});
+
